@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.google.common.net.MediaType;
 import org.mockserver.client.serialization.Base64Converter;
 import org.mockserver.client.serialization.ObjectMapperFactory;
 import org.mockserver.client.serialization.model.*;
@@ -52,7 +53,7 @@ public class BodyDTODeserializer extends StdDeserializer<BodyDTO> {
         String valueJsonValue = "";
         Body.Type type = null;
         boolean not = false;
-        Charset charset = null;
+        MediaType contentType = null;
         MatchType matchType = JsonBody.DEFAULT_MATCH_TYPE;
         List<Parameter> parameters = new ArrayList<Parameter>();
         if (currentToken == JsonToken.START_OBJECT) {
@@ -88,10 +89,10 @@ public class BodyDTODeserializer extends StdDeserializer<BodyDTO> {
                         logger.warn("Ignoring incorrect JsonBodyMatchType with value \"" + jsonParser.getText() + "\"");
                     }
                 }
-                if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME && jsonParser.getText().equalsIgnoreCase("charset")) {
+                if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME && jsonParser.getText().equalsIgnoreCase("contentType")) {
                     jsonParser.nextToken();
                     try {
-                        charset = Charset.forName(jsonParser.getText());
+                        contentType = MediaType.parse(jsonParser.getText());
                     } catch (UnsupportedCharsetException uce) {
                         logger.warn("Ignoring unsupported Charset with value \"" + jsonParser.getText() + "\"");
                     }
@@ -145,19 +146,35 @@ public class BodyDTODeserializer extends StdDeserializer<BodyDTO> {
             if (type != null) {
                 switch (type) {
                     case STRING:
-                        return new StringBodyDTO(new StringBody(valueJsonValue, charset), not);
+                        if (contentType != null) {
+                            return new StringBodyDTO(new StringBody(valueJsonValue, contentType), not);
+                        } else {
+                            return new StringBodyDTO(new StringBody(valueJsonValue), not);
+                        }
                     case REGEX:
                         return new RegexBodyDTO(new RegexBody(valueJsonValue), not);
                     case JSON:
-                        return new JsonBodyDTO(new JsonBody(valueJsonValue, charset, matchType), not);
+                        if (contentType != null) {
+                            return new JsonBodyDTO(new JsonBody(valueJsonValue, contentType, matchType), not);
+                        } else {
+                            return new JsonBodyDTO(new JsonBody(valueJsonValue, matchType), not);
+                        }
                     case JSON_SCHEMA:
                         return new JsonSchemaBodyDTO(new JsonSchemaBody(valueJsonValue), not);
                     case XPATH:
                         return new XPathBodyDTO(new XPathBody(valueJsonValue), not);
                     case XML:
-                        return new XmlBodyDTO(new XmlBody(valueJsonValue), not);
+                        if (contentType != null) {
+                            return new XmlBodyDTO(new XmlBody(valueJsonValue, contentType), not);
+                        } else {
+                            return new XmlBodyDTO(new XmlBody(valueJsonValue), not);
+                        }
                     case BINARY:
-                        return new BinaryBodyDTO(new BinaryBody(Base64Converter.base64StringToBytes(valueJsonValue)), not);
+                        if (contentType != null) {
+                            return new BinaryBodyDTO(new BinaryBody(Base64Converter.base64StringToBytes(valueJsonValue), contentType), not);
+                        } else {
+                            return new BinaryBodyDTO(new BinaryBody(Base64Converter.base64StringToBytes(valueJsonValue)), not);
+                        }
                     case PARAMETERS:
                         return new ParameterBodyDTO(new ParameterBody(parameters), not);
                 }

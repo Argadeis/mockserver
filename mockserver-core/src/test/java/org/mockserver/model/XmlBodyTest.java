@@ -21,7 +21,7 @@ public class XmlBodyTest {
         // then
         assertThat(xmlBody.getValue(), is("some_body"));
         assertThat(xmlBody.getType(), is(Body.Type.XML));
-        assertThat(xmlBody.getContentType(), nullValue());
+        assertThat(xmlBody.getContentType(), is(XmlBody.DEFAULT_CONTENT_TYPE.toString()));
         assertThat(xmlBody.getCharset(Charsets.UTF_8), is(Charsets.UTF_8));
     }
 
@@ -33,7 +33,7 @@ public class XmlBodyTest {
         // then
         assertThat(xmlBody.getValue(), is("some_body"));
         assertThat(xmlBody.getType(), is(Body.Type.XML));
-        assertThat(xmlBody.getContentType(), nullValue());
+        assertThat(xmlBody.getContentType(), is(XmlBody.DEFAULT_CONTENT_TYPE.toString()));
         assertThat(xmlBody.getCharset(Charsets.UTF_8), is(Charsets.UTF_8));
     }
 

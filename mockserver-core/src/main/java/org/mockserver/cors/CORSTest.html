@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>CORS Mock Server Test</title>
+    <script>
+        function createExpectation (then) {
+            var http = new XMLHttpRequest();
+            var expectation = {
+                "httpRequest": {
+                    "method": "GET",
+                    "path": "/simple"
+                },
+                "httpResponse": {
+                    "statusCode": 200,
+                    "headers": [{
+                        name: "Access-Control-Allow-Origin",
+                        values: "*"
+                    }, {
+                        name: "Access-Control-Allow-Methods",
+                        values: "GET"
+                    }],
+                    "body": "some response"
+                },
+                "times": {
+                    "remainingTimes": 1,
+                    "unlimited": true
+                }
+            };
+            http.open("PUT", "http://localhost:1080/expectation", true);
+            http.onreadystatechange = function() {
+                if(http.readyState == 4) {
+                    alert(http.status + " - " + http.responseText);
+                    then();
+                }
+            };
+            http.send(JSON.stringify(expectation));
+        }
+
+        function makeRequest() {
+            var http = new XMLHttpRequest();
+            http.open("GET", "http://localhost:1080/simple", true);
+            http.onreadystatechange = function() {
+                if(http.readyState == 4) {
+                    alert(http.status + " - " + http.responseText);
+                }
+            };
+            http.send();
+        }
+
+        createExpectation(makeRequest);
+    </script>
+</head>
+<body>
+
+</body>
+</html>

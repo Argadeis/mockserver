@@ -1,10 +1,11 @@
 package org.mockserver.client.serialization.deserializers.body;
 
-import com.google.common.base.Charsets;
+import com.google.common.net.MediaType;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.Test;
 import org.mockserver.client.serialization.ObjectMapperFactory;
 import org.mockserver.client.serialization.model.*;
+import org.mockserver.matchers.MatchType;
 import org.mockserver.model.*;
 
 import javax.xml.bind.DatatypeConverter;
@@ -79,12 +80,12 @@ public class BodyDTODeserializerTest {
     }
 
     @Test
-    public void shouldParseJSONWithCharsetInBody() throws IOException {
+    public void shouldParseJSONWithMediaTypeInBody() throws IOException {
         // given
         String json = ("{" + System.getProperty("line.separator") +
                 "    \"httpRequest\": {" + System.getProperty("line.separator") +
                 "        \"body\" : {" + System.getProperty("line.separator") +
-                "            \"charset\" : \"UTF-16\"," + System.getProperty("line.separator") +
+                "            \"contentType\" : \"application/json; charset=utf-8\"," + System.getProperty("line.separator") +
                 "            \"type\" : \"STRING\"," + System.getProperty("line.separator") +
                 "            \"string\" : \"some_value\"" + System.getProperty("line.separator") +
                 "        }" + System.getProperty("line.separator") +
@@ -98,7 +99,7 @@ public class BodyDTODeserializerTest {
         assertEquals(new ExpectationDTO()
                 .setHttpRequest(
                         new HttpRequestDTO()
-                                .setBody(new StringBodyDTO(new StringBody("some_value", Charsets.UTF_16)))
+                                .setBody(new StringBodyDTO(new StringBody("some_value", MediaType.JSON_UTF_8)))
                 ), expectationDTO);
     }
 
@@ -379,6 +380,29 @@ public class BodyDTODeserializerTest {
     }
 
     @Test
+    public void shouldParseJSONWithExactStringBodyWitMediaType() throws IOException {
+        // given
+        String json = ("{" + System.getProperty("line.separator") +
+                "    \"httpRequest\": {" + System.getProperty("line.separator") +
+                "        \"body\" : {" + System.getProperty("line.separator") +
+                "            \"contentType\" : \"text/plain; charset=utf-8\"," + System.getProperty("line.separator") +
+                "            \"string\" : \"some_value\"" + System.getProperty("line.separator") +
+                "        }" + System.getProperty("line.separator") +
+                "    }" + System.getProperty("line.separator") +
+                "}");
+
+        // when
+        ExpectationDTO expectationDTO = ObjectMapperFactory.createObjectMapper().readValue(json, ExpectationDTO.class);
+
+        // then
+        assertEquals(new ExpectationDTO()
+                .setHttpRequest(
+                        new HttpRequestDTO()
+                                .setBody(new StringBodyDTO(new StringBody("some_value", MediaType.PLAIN_TEXT_UTF_8)))
+                ), expectationDTO);
+    }
+
+    @Test
     public void shouldParseJSONWithExactStringBodyWithoutType() throws IOException {
         // given
         String json = ("{" + System.getProperty("line.separator") +
@@ -626,6 +650,31 @@ public class BodyDTODeserializerTest {
                 .setHttpRequest(
                         new HttpRequestDTO()
                                 .setBody(new JsonBodyDTO(new JsonBody("{'employees':[{'firstName':'John', 'lastName':'Doe'}]}")))
+                ), expectationDTO);
+    }
+
+    @Test
+    public void shouldParseJSONWithJsonBodyWithMatchTypeAndMediaType() throws IOException {
+        // given
+        String json = ("{" + System.getProperty("line.separator") +
+                "    \"httpRequest\": {" + System.getProperty("line.separator") +
+                "        \"body\" : {" + System.getProperty("line.separator") +
+                "            \"type\" : \"JSON\"," + System.getProperty("line.separator") +
+                "            \"matchType\" : \"STRICT\"," + System.getProperty("line.separator") +
+                "            \"contentType\" : \"application/json; charset=utf-8\"," + System.getProperty("line.separator") +
+                "            \"json\" : \"{'employees':[{'firstName':'John', 'lastName':'Doe'}]}\"" + System.getProperty("line.separator") +
+                "        }" + System.getProperty("line.separator") +
+                "    }" + System.getProperty("line.separator") +
+                "}");
+
+        // when
+        ExpectationDTO expectationDTO = ObjectMapperFactory.createObjectMapper().readValue(json, ExpectationDTO.class);
+
+        // then
+        assertEquals(new ExpectationDTO()
+                .setHttpRequest(
+                        new HttpRequestDTO()
+                                .setBody(new JsonBodyDTO(new JsonBody("{'employees':[{'firstName':'John', 'lastName':'Doe'}]}", MediaType.JSON_UTF_8, MatchType.STRICT)))
                 ), expectationDTO);
     }
 
@@ -932,6 +981,29 @@ public class BodyDTODeserializerTest {
     }
 
     @Test
+    public void shouldParseJSONWithXmlBodyWithMediaType() throws IOException {
+        // given
+        String json = ("{" + System.getProperty("line.separator") +
+                "    \"httpRequest\": {" + System.getProperty("line.separator") +
+                "        \"body\" : {" + System.getProperty("line.separator") +
+                "            \"contentType\" : \"text/xml; charset=utf-8\"," + System.getProperty("line.separator") +
+                "            \"xml\" : \"<some><xml></xml></some>\"" + System.getProperty("line.separator") +
+                "        }" + System.getProperty("line.separator") +
+                "    }" + System.getProperty("line.separator") +
+                "}");
+
+        // when
+        ExpectationDTO expectationDTO = ObjectMapperFactory.createObjectMapper().readValue(json, ExpectationDTO.class);
+
+        // then
+        assertEquals(new ExpectationDTO()
+                .setHttpRequest(
+                        new HttpRequestDTO()
+                                .setBody(new XmlBodyDTO(new XmlBody("<some><xml></xml></some>", MediaType.XML_UTF_8)))
+                ), expectationDTO);
+    }
+
+    @Test
     public void shouldParseJSONWithXmlBodyUsingXpathProperty() throws IOException {
         // given
         String json = ("{" + System.getProperty("line.separator") +
@@ -1020,6 +1092,30 @@ public class BodyDTODeserializerTest {
                         new HttpRequestDTO()
                                 .setBody(new BinaryBodyDTO(new BinaryBody("some_value".getBytes()), true))
                 ), expectationDTO);
+    }
+
+    @Test
+    public void shouldParseJSONWithBinaryBodyWithMediaType() throws IOException {
+        // given
+        String json = ("{" + System.getProperty("line.separator") +
+                "    \"httpRequest\": {" + System.getProperty("line.separator") +
+                "        \"body\" : {" + System.getProperty("line.separator") +
+                "            \"contentType\" : \"" + MediaType.ANY_VIDEO_TYPE + "\"," + System.getProperty("line.separator") +
+                "            \"bytes\" : \"" + DatatypeConverter.printBase64Binary("some_value".getBytes()) + "\"" + System.getProperty("line.separator") +
+                "        }" + System.getProperty("line.separator") +
+                "    }" + System.getProperty("line.separator") +
+                "}");
+
+        // when
+        ExpectationDTO expectationDTO = ObjectMapperFactory.createObjectMapper().readValue(json, ExpectationDTO.class);
+
+        // then
+        ExpectationDTO expected = new ExpectationDTO()
+                .setHttpRequest(
+                        new HttpRequestDTO()
+                                .setBody(new BinaryBodyDTO(new BinaryBody("some_value".getBytes(), MediaType.ANY_VIDEO_TYPE)))
+                );
+        assertEquals(expected, expectationDTO);
     }
 
     @Test
